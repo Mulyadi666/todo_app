@@ -3,10 +3,12 @@ import 'task_page.dart';
 import 'task_detail.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -14,16 +16,19 @@ class MyApp extends StatelessWidget {
       title: 'Todoit.',
       initialRoute: '/',
       onGenerateRoute: (settings) {
-        // Periksa apakah route adalah halaman detail
         if (settings.name == '/details') {
-          // Ambil argument yang dikirim
-          final task = settings.arguments as String;
+          final arguments = settings.arguments as Map<String, dynamic>;
+          final task = arguments['task'];
+          final onEdit = arguments['onEdit'];
           return MaterialPageRoute(
-            builder: (context) => TaskDetails(task: task),
+            builder: (context) => TaskDetails(
+              task: task,
+              onEdit: onEdit,
+            ),
           );
         }
         return MaterialPageRoute(
-          builder: (context) => MainScreen(),
+          builder: (context) => const MainScreen(),
         );
       },
     );
@@ -31,16 +36,19 @@ class MyApp extends StatelessWidget {
 }
 
 class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
   @override
   _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+
   final List<Widget> _pages = [
-    TaskPage(),
-    Center(child: Text("Halaman Profil")),
-    Center(child: Text("Halaman Pengaturan")),
+    const TaskPage(),
+    const Center(child: Text("Halaman Profil")),
+    const Center(child: Text("Halaman Pengaturan")),
   ];
 
   void _onItemTapped(int index) {
@@ -80,7 +88,7 @@ class _MainScreenState extends State<MainScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
+            const DrawerHeader(
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
@@ -93,13 +101,16 @@ class _MainScreenState extends State<MainScreen> {
               ),
             ),
             ListTile(
-              title: Text('Halaman Tugas'),
+              title: const Text('Halaman Tugas'),
               onTap: () {
-                Navigator.pushNamed(context, '/tasks');
+                Navigator.pop(context); // Close drawer
+                setState(() {
+                  _selectedIndex = 0;
+                });
               },
             ),
             ListTile(
-              title: Text('Profil'),
+              title: const Text('Profil'),
               onTap: () {
                 Navigator.pop(context); // Close drawer
                 setState(() {
@@ -108,7 +119,7 @@ class _MainScreenState extends State<MainScreen> {
               },
             ),
             ListTile(
-              title: Text('Pengaturan'),
+              title: const Text('Pengaturan'),
               onTap: () {
                 Navigator.pop(context); // Close drawer
                 setState(() {

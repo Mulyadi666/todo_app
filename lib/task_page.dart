@@ -1,49 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // Digunakan untuk encoding dan decoding data
+import 'dart:convert';
+
 import 'task_detail.dart';
 
 class TaskPage extends StatefulWidget {
+  const TaskPage({super.key});
+
   @override
   _TaskPageState createState() => _TaskPageState();
 }
 
 class _TaskPageState extends State<TaskPage> {
-  List<String> tasks = []; // Daftar tugas
-  bool _isGridView = false; // Variabel untuk mengatur tampilan Grid atau List
+  List<Map<String, dynamic>> tasks = [];
+  bool _isGridView = false;
+
   @override
   void initState() {
     super.initState();
-    _loadTasks(); // Muat tugas dari shared_preferences saat aplikasi dimulai
+    _loadTasks();
   }
 
-  // Fungsi untuk menambah tugas baru dan menyimpannya
   void _addTask(String task) {
     setState(() {
-      tasks.add(task);
+      tasks.add({'task': task, 'date': DateTime.now().toIso8601String()});
     });
-    _saveTasks(); // Simpan tugas ke shared_preferences
+    _saveTasks();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Tugas '$task' ditambahkan!")),
     );
   }
 
-  // Fungsi untuk menyimpan tugas ke shared_preferences
   Future<void> _saveTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('tasks', tasks); // Simpan sebagai list of string
+    List<String> encodedTasks = tasks.map((task) => jsonEncode(task)).toList();
+    prefs.setStringList('tasks', encodedTasks);
   }
 
-  // Fungsi untuk memuat tugas dari shared_preferences
   Future<void> _loadTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String>? encodedTasks =
+        prefs.getStringList('tasks'); // Ambil List<String>
     setState(() {
-      tasks = prefs.getStringList('tasks') ??
-          []; // Muat list atau gunakan list kosong jika null
+      tasks = encodedTasks != null
+          ? encodedTasks
+              .map((task) => jsonDecode(task) as Map<String, dynamic>)
+              .toList() // Lakukan casting
+          : [];
     });
   }
 
-  // Fungsi untuk menampilkan dialog tambah tugas
+  void _editTask(int index, String updatedTask, DateTime updatedDate) {
+    setState(() {
+      tasks[index]['task'] = updatedTask;
+      tasks[index]['date'] = updatedDate.toIso8601String();
+    });
+    _saveTasks(); // Simpan perubahan ke storage
+  }
+
   void _showAddTaskDialog() {
     String newTask = "";
     showDialog(
@@ -61,8 +75,10 @@ class _TaskPageState extends State<TaskPage> {
             TextButton(
               child: const Text("Tambah"),
               onPressed: () {
-                _addTask(newTask);
-                Navigator.of(context).pop();
+                if (newTask.isNotEmpty) {
+                  _addTask(newTask);
+                  Navigator.of(context).pop();
+                }
               },
             ),
             TextButton(
@@ -77,7 +93,6 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  // Fungsi untuk menghapus tugas dengan konfirmasi
   void _confirmDeleteTask(int index) {
     showDialog(
       context: context,
@@ -97,10 +112,11 @@ class _TaskPageState extends State<TaskPage> {
               onPressed: () {
                 setState(() {
                   tasks.removeAt(index);
+                  _saveTasks();
                 });
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Tugas dihapus")),
+                  const SnackBar(content: Text("Tugas dihapus")),
                 );
               },
             ),
@@ -120,7 +136,7 @@ class _TaskPageState extends State<TaskPage> {
             icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
             onPressed: () {
               setState(() {
-                _isGridView = !_isGridView; // Toggle antara List dan Grid
+                _isGridView = !_isGridView;
               });
             },
           ),
@@ -134,18 +150,25 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  // Fungsi untuk menampilkan daftar tugas dalam tampilan List
   Widget _buildListView() {
     return ListView.builder(
       itemCount: tasks.length,
       itemBuilder: (context, index) {
         return ListTile(
-          title: Text(tasks[index]),
+          title: Text(tasks[index]['task']),
+          subtitle: Text(
+            tasks[index]['date'].toString().split('T').first,
+          ),
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TaskDetails(task: tasks[index]),
+                builder: (context) => TaskDetails(
+                  task: tasks[index]['task'],
+                  onEdit: (updatedTask, updatedDate) {
+                    _editTask(index, updatedTask, updatedDate);
+                  },
+                ),
               ),
             );
           },
@@ -158,11 +181,10 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  // Fungsi untuk menampilkan daftar tugas dalam tampilan Grid
   Widget _buildGridView() {
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // Jumlah kolom di grid
+        crossAxisCount: 2,
         crossAxisSpacing: 8.0,
         mainAxisSpacing: 8.0,
       ),
@@ -173,7 +195,12 @@ class _TaskPageState extends State<TaskPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TaskDetails(task: tasks[index]),
+                builder: (context) => TaskDetails(
+                  task: tasks[index]['task'],
+                  onEdit: (updatedTask, updatedDate) {
+                    _editTask(index, updatedTask, updatedDate);
+                  },
+                ),
               ),
             );
           },
@@ -192,9 +219,19 @@ class _TaskPageState extends State<TaskPage> {
               ),
               child: Center(
                 child: Text(
-                  tasks[index],
+                  tasks[index]['task'],
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              footer: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  tasks[index]['date'].toString().split('T').first,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),

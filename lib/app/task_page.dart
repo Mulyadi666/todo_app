@@ -217,6 +217,13 @@ class _TaskPageState extends State<TaskPage> {
                   ),
                 ),
               ),
+              footer: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  tasks[index]['date'].toString().split('T').first,
+                  textAlign: TextAlign.center,
+                ),
+              ),
               child: Center(
                 child: Text(
                   tasks[index]['task'],
@@ -225,13 +232,6 @@ class _TaskPageState extends State<TaskPage> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-              ),
-              footer: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  tasks[index]['date'].toString().split('T').first,
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),

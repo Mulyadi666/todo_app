@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'add_task.dart';
+import '../widgets/task_form.dart';
 import 'edit_task.dart';
 import '../models/task.dart';
 
@@ -16,6 +16,27 @@ class TaskPage extends StatelessWidget {
     required this.editTask,
     required this.toggleTaskCompletion,
   });
+
+  void _showAddTaskDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Tambah Tugas'),
+          content: TaskForm(
+            onSave: (task) {
+              addTask(task);
+            },
+          ),
+        );
+      },
+    ).then((_) {
+      // Focus on the text field when the dialog is shown
+      Future.delayed(Duration(milliseconds: 100), () {
+        FocusScope.of(context).requestFocus(FocusNode());
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,14 +93,7 @@ class TaskPage extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddTask(
-                onSave: addTask,
-              ),
-            ),
-          );
+          _showAddTaskDialog(context);
         },
         child: Icon(Icons.add),
       ),

@@ -13,16 +13,20 @@ class TaskForm extends StatefulWidget {
 
 class _TaskFormState extends State<TaskForm> {
   final _formKey = GlobalKey<FormState>();
-  late String _description;
+  final _descriptionController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.task != null) {
-      _description = widget.task!.description;
-    } else {
-      _description = '';
+      _descriptionController.text = widget.task!.description;
     }
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
   }
 
   @override
@@ -32,9 +36,10 @@ class _TaskFormState extends State<TaskForm> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
-              initialValue: _description,
+              controller: _descriptionController,
               decoration: InputDecoration(labelText: 'Deskripsi Tugas'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -42,18 +47,14 @@ class _TaskFormState extends State<TaskForm> {
                 }
                 return null;
               },
-              onSaved: (value) {
-                _description = value!;
-              },
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  _formKey.currentState!.save();
                   widget.onSave(Task(
                     id: widget.task?.id ?? '',
-                    description: _description,
+                    description: _descriptionController.text,
                     isCompleted: widget.task?.isCompleted ?? false,
                   ));
                   Navigator.pop(context);

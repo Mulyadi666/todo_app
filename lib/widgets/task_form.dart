@@ -48,7 +48,10 @@ class _TaskFormState extends State<TaskForm> {
                 return null;
               },
             ),
-            SizedBox(height: 20),
+            SizedBox(
+              height: 20,
+              width: 60,
+            ),
             ElevatedButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
@@ -57,7 +60,6 @@ class _TaskFormState extends State<TaskForm> {
                     description: _descriptionController.text,
                     isCompleted: widget.task?.isCompleted ?? false,
                   ));
-                  Navigator.pop(context);
                 }
               },
               child: Text('Simpan Tugas'),

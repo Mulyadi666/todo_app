@@ -13,19 +13,23 @@ class NoteForm extends StatefulWidget {
 
 class _NoteFormState extends State<NoteForm> {
   final _formKey = GlobalKey<FormState>();
-  late String _title;
-  late String _content;
+  final _titleController = TextEditingController();
+  final _contentController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.note != null) {
-      _title = widget.note!.title;
-      _content = widget.note!.content;
-    } else {
-      _title = '';
-      _content = '';
+      _titleController.text = widget.note!.title;
+      _contentController.text = widget.note!.content;
     }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,9 +39,10 @@ class _NoteFormState extends State<NoteForm> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
-              initialValue: _title,
+              controller: _titleController,
               decoration: InputDecoration(labelText: 'Judul Catatan'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -45,12 +50,9 @@ class _NoteFormState extends State<NoteForm> {
                 }
                 return null;
               },
-              onSaved: (value) {
-                _title = value!;
-              },
             ),
             TextFormField(
-              initialValue: _content,
+              controller: _contentController,
               decoration: InputDecoration(labelText: 'Isi Catatan'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
@@ -58,21 +60,16 @@ class _NoteFormState extends State<NoteForm> {
                 }
                 return null;
               },
-              onSaved: (value) {
-                _content = value!;
-              },
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  _formKey.currentState!.save();
                   widget.onSave(Note(
                     id: widget.note?.id ?? '',
-                    title: _title,
-                    content: _content,
+                    title: _titleController.text,
+                    content: _contentController.text,
                   ));
-                  Navigator.pop(context);
                 }
               },
               child: Text('Simpan Catatan'),

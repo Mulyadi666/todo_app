@@ -13,7 +13,13 @@ class AddTask extends StatelessWidget {
       appBar: AppBar(
         title: Text('Tambah Tugas'),
       ),
-      body: TaskForm(onSave: onSave),
+      body: TaskForm(
+        onSave: (task) {
+          onSave(task);
+          Navigator.pop(
+              context); // Kembali ke halaman sebelumnya setelah menyimpan
+        },
+      ),
     );
   }
 }

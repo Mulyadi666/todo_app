@@ -4,18 +4,26 @@ import '../widgets/task_form.dart';
 import 'edit_task.dart';
 import '../models/task.dart';
 
-class TaskPage extends StatelessWidget {
+class TaskPage extends StatefulWidget {
   final List<Task> tasks;
   final Function(Task) addTask;
   final Function(int, Task) editTask;
-  final Function(int) toggleTaskCompletion;
-
+  final Function(String) toggleTaskCompletion; // Tipe String untuk ID
+  final Function(String) deleteTask; // Menggunakan ID tugas
   TaskPage({
     required this.tasks,
     required this.addTask,
     required this.editTask,
     required this.toggleTaskCompletion,
+    required this.deleteTask, // Menggunakan ID untuk delete
   });
+
+  @override
+  _TaskPageState createState() => _TaskPageState();
+}
+
+class _TaskPageState extends State<TaskPage> {
+  List<Task> selectedTasks = []; // Menyimpan task yang dipilih untuk dihapus
 
   void _showAddTaskDialog(BuildContext context) {
     showDialog(
@@ -25,16 +33,22 @@ class TaskPage extends StatelessWidget {
           title: Text('Tambah Tugas'),
           content: TaskForm(
             onSave: (task) {
-              addTask(task);
+              widget.addTask(task);
+              Navigator.pop(context); // Menutup dialog setelah menambah task
             },
           ),
         );
       },
-    ).then((_) {
-      // Focus on the text field when the dialog is shown
-      Future.delayed(Duration(milliseconds: 100), () {
-        FocusScope.of(context).requestFocus(FocusNode());
-      });
+    );
+  }
+
+  void _toggleSelection(int index) {
+    setState(() {
+      if (selectedTasks.contains(widget.tasks[index])) {
+        selectedTasks.remove(widget.tasks[index]);
+      } else {
+        selectedTasks.add(widget.tasks[index]);
+      }
     });
   }
 
@@ -43,6 +57,22 @@ class TaskPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Tugas'),
+        actions: [
+          if (selectedTasks.isNotEmpty)
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                // Menghapus task yang dipilih berdasarkan ID
+                selectedTasks.forEach((task) {
+                  widget.deleteTask(task.id);
+                  // Menghapus berdasarkan ID
+                });
+                setState(() {
+                  selectedTasks.clear(); // Clear the selection after delete
+                });
+              },
+            ),
+        ],
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection('tasks').snapshots(),
@@ -50,6 +80,7 @@ class TaskPage extends StatelessWidget {
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
+
           var tasks = snapshot.data!.docs.map((doc) {
             return Task(
               id: doc.id,
@@ -57,35 +88,54 @@ class TaskPage extends StatelessWidget {
               isCompleted: doc['isCompleted'],
             );
           }).toList();
+
+          if (tasks.isEmpty) {
+            return Center(child: Text('Tidak ada tugas'));
+          }
+
           return ListView.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(
-                  tasks[index].description,
-                  style: TextStyle(
-                    decoration: tasks[index].isCompleted
-                        ? TextDecoration.lineThrough
-                        : TextDecoration.none,
+              return GestureDetector(
+                onLongPress: () {
+                  _toggleSelection(index); // Tahan untuk memilih
+                },
+                child: Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                ),
-                trailing: Checkbox(
-                  value: tasks[index].isCompleted,
-                  onChanged: (bool? value) {
-                    toggleTaskCompletion(index);
-                  },
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditTask(
-                        task: tasks[index],
-                        onSave: (task) => editTask(index, task),
+                  child: ListTile(
+                    leading: Checkbox(
+                      value: tasks[index].isCompleted,
+                      onChanged: (bool? value) {
+                        // Toggle task completion status by task ID
+                        widget.toggleTaskCompletion(
+                            tasks[index].id); // Menggunakan ID
+                      },
+                    ),
+                    title: Text(
+                      tasks[index].description,
+                      style: TextStyle(
+                        decoration: tasks[index].isCompleted
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
                       ),
                     ),
-                  );
-                },
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditTask(
+                            task: tasks[index],
+                            onSave: (task) => widget.editTask(index, task),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               );
             },
           );

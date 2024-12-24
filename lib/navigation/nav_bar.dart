@@ -9,18 +9,22 @@ class NavBar extends StatefulWidget {
   final List<Note> notes;
   final Function(Task) addTask;
   final Function(int, Task) editTask;
-  final Function(int) toggleTaskCompletion;
+  final Function(String) toggleTaskCompletion; // Mengubah ke String
   final Function(Note) addNote;
   final Function(int, Note) editNote;
+  final Function toggleDarkMode;
+  final bool isDarkMode;
 
   NavBar({
     required this.tasks,
     required this.notes,
     required this.addTask,
     required this.editTask,
-    required this.toggleTaskCompletion,
+    required this.toggleTaskCompletion, // Pastikan tipe ini sesuai
     required this.addNote,
     required this.editNote,
+    required this.toggleDarkMode,
+    required this.isDarkMode,
   });
 
   @override
@@ -36,6 +40,9 @@ class _NavBarState extends State<NavBar> {
           addTask: widget.addTask,
           editTask: widget.editTask,
           toggleTaskCompletion: widget.toggleTaskCompletion,
+          deleteTask: (taskId) {
+            // Implement the delete task functionality here
+          },
         ),
         NotePage(
           notes: widget.notes,
@@ -53,6 +60,15 @@ class _NavBarState extends State<NavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        // title: Text('Aplikasi Todo'),
+        actions: [
+          IconButton(
+            icon: Icon(widget.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
+            onPressed: widget.toggleDarkMode as VoidCallback,
+          ),
+        ],
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

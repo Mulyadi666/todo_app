@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:todo_app/models/note.dart';
 import '../widgets/note_form.dart';
+import '../models/note.dart';
 
 class AddNote extends StatelessWidget {
   final Function(Note) onSave;
 
-  AddNote({
-    Key? key,
-    required this.onSave,
-  }) : super(key: key);
+  AddNote({required this.onSave});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Note'),
+        title: Text('Tambah Catatan'),
       ),
       body: NoteForm(
-        onSave: onSave,
+        onSave: (note) {
+          onSave(note);
+          Navigator.pop(
+              context); // Kembali ke halaman sebelumnya setelah menyimpan
+        },
       ),
     );
   }

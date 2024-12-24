@@ -32,6 +32,7 @@ class TodoAppState extends StatefulWidget {
 class _TodoAppStateState extends State<TodoAppState> {
   List<Task> tasks = [];
   List<Note> notes = [];
+  bool isDarkMode = false;
 
   void addTask(Task task) async {
     var docRef = await FirebaseFirestore.instance.collection('tasks').add({
@@ -46,27 +47,51 @@ class _TodoAppStateState extends State<TodoAppState> {
     });
   }
 
-  void editTask(int index, Task task) async {
-    var taskDoc =
-        FirebaseFirestore.instance.collection('tasks').doc(tasks[index].id);
-    await taskDoc.update({
-      'description': task.description,
-      'isCompleted': task.isCompleted,
-    });
-    setState(() {
-      tasks[index] = task;
-    });
+  void editTask(int index, Task updatedTask) async {
+    try {
+      var taskDoc =
+          FirebaseFirestore.instance.collection('tasks').doc(updatedTask.id);
+      await taskDoc.update({
+        'description': updatedTask.description,
+        'isCompleted': updatedTask.isCompleted,
+      });
+
+      setState(() {
+        tasks[index] = updatedTask; // Update lokal
+      });
+    } catch (e) {
+      print("Error updating task: $e");
+    }
   }
 
-  void toggleTaskCompletion(int index) async {
-    var taskDoc =
-        FirebaseFirestore.instance.collection('tasks').doc(tasks[index].id);
-    await taskDoc.update({
-      'isCompleted': !tasks[index].isCompleted,
-    });
-    setState(() {
-      tasks[index].isCompleted = !tasks[index].isCompleted;
-    });
+  void toggleTaskCompletion(String id) async {
+    try {
+      var taskDoc = FirebaseFirestore.instance
+          .collection('tasks')
+          .doc(id); // Menerima ID tugas
+      DocumentSnapshot doc = await taskDoc.get();
+
+      if (doc.exists) {
+        bool currentStatus = doc['isCompleted'];
+        await taskDoc.update({'isCompleted': !currentStatus});
+
+        // Perbarui status tugas secara lokal
+        setState(() {
+          tasks = tasks.map((task) {
+            if (task.id == id) {
+              return Task(
+                id: task.id,
+                description: task.description,
+                isCompleted: !currentStatus,
+              );
+            }
+            return task;
+          }).toList();
+        });
+      }
+    } catch (e) {
+      print("Error updating task: $e");
+    }
   }
 
   void addNote(Note note) async {
@@ -80,6 +105,7 @@ class _TodoAppStateState extends State<TodoAppState> {
   }
 
   void editNote(int index, Note note) async {
+    if (index < 0 || index >= notes.length) return; // Periksa indeks yang valid
     var noteDoc =
         FirebaseFirestore.instance.collection('notes').doc(notes[index].id);
     await noteDoc.update({
@@ -91,16 +117,35 @@ class _TodoAppStateState extends State<TodoAppState> {
     });
   }
 
+  void toggleDarkMode() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return NavBar(
-      tasks: tasks,
-      notes: notes,
-      addTask: addTask,
-      editTask: editTask,
-      toggleTaskCompletion: toggleTaskCompletion,
-      addNote: addNote,
-      editNote: editNote,
+    return MaterialApp(
+      title: 'Aplikasi Todo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+      ),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: NavBar(
+        tasks: tasks,
+        notes: notes,
+        addTask: addTask,
+        editTask: editTask,
+        toggleTaskCompletion: toggleTaskCompletion,
+        addNote: addNote,
+        editNote: editNote,
+        toggleDarkMode: toggleDarkMode,
+        isDarkMode: isDarkMode,
+      ),
     );
   }
 }

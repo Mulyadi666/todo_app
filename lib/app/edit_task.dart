@@ -15,7 +15,11 @@ class EditTask extends StatelessWidget {
         title: Text('Edit Tugas'),
       ),
       body: TaskForm(
-        onSave: onSave,
+        onSave: (updatedTask) {
+          onSave(updatedTask);
+          Navigator.pop(
+              context); // Kembali ke halaman sebelumnya setelah menyimpan
+        },
         task: task,
       ),
     );

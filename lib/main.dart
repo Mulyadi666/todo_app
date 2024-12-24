@@ -126,7 +126,7 @@ class _TodoAppStateState extends State<TodoAppState> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Aplikasi Todo',
+      title: 'Todoit.',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         brightness: Brightness.light,

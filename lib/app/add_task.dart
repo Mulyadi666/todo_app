@@ -2,22 +2,18 @@ import 'package:flutter/material.dart';
 import '../widgets/task_form.dart';
 import '../models/task.dart';
 
-class EditTask extends StatelessWidget {
-  final Task task;
+class AddTask extends StatelessWidget {
   final Function(Task) onSave;
 
-  EditTask({required this.task, required this.onSave});
+  AddTask({required this.onSave});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Tugas'),
+        title: Text('Tambah Tugas'),
       ),
-      body: TaskForm(
-        onSave: onSave,
-        task: task,
-      ),
+      body: TaskForm(onSave: onSave),
     );
   }
 }

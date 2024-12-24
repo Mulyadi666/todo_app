@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_task.dart';
 import 'edit_task.dart';
 import '../models/task.dart';
@@ -22,33 +23,48 @@ class TaskPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('Tugas'),
       ),
-      body: ListView.builder(
-        itemCount: tasks.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(
-              tasks[index].description,
-              style: TextStyle(
-                decoration: tasks[index].isCompleted
-                    ? TextDecoration.lineThrough
-                    : TextDecoration.none,
-              ),
-            ),
-            trailing: Checkbox(
-              value: tasks[index].isCompleted,
-              onChanged: (bool? value) {
-                toggleTaskCompletion(index);
-              },
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditTask(
-                    task: tasks[index],
-                    onSave: (task) => editTask(index, task),
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection('tasks').snapshots(),
+        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+          var tasks = snapshot.data!.docs.map((doc) {
+            return Task(
+              id: doc.id,
+              description: doc['description'],
+              isCompleted: doc['isCompleted'],
+            );
+          }).toList();
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(
+                  tasks[index].description,
+                  style: TextStyle(
+                    decoration: tasks[index].isCompleted
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
                   ),
                 ),
+                trailing: Checkbox(
+                  value: tasks[index].isCompleted,
+                  onChanged: (bool? value) {
+                    toggleTaskCompletion(index);
+                  },
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditTask(
+                        task: tasks[index],
+                        onSave: (task) => editTask(index, task),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           );

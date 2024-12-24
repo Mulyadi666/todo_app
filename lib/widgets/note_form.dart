@@ -39,6 +39,12 @@ class _NoteFormState extends State<NoteForm> {
             TextFormField(
               initialValue: _title,
               decoration: InputDecoration(labelText: 'Judul Catatan'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Judul tidak boleh kosong';
+                }
+                return null;
+              },
               onSaved: (value) {
                 _title = value!;
               },
@@ -46,6 +52,12 @@ class _NoteFormState extends State<NoteForm> {
             TextFormField(
               initialValue: _content,
               decoration: InputDecoration(labelText: 'Isi Catatan'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Isi tidak boleh kosong';
+                }
+                return null;
+              },
               onSaved: (value) {
                 _content = value!;
               },
@@ -55,7 +67,11 @@ class _NoteFormState extends State<NoteForm> {
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
-                  widget.onSave(Note(title: _title, content: _content));
+                  widget.onSave(Note(
+                    id: widget.note?.id ?? '',
+                    title: _title,
+                    content: _content,
+                  ));
                   Navigator.pop(context);
                 }
               },

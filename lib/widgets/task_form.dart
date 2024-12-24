@@ -36,6 +36,12 @@ class _TaskFormState extends State<TaskForm> {
             TextFormField(
               initialValue: _description,
               decoration: InputDecoration(labelText: 'Deskripsi Tugas'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Deskripsi tidak boleh kosong';
+                }
+                return null;
+              },
               onSaved: (value) {
                 _description = value!;
               },
@@ -45,7 +51,11 @@ class _TaskFormState extends State<TaskForm> {
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
-                  widget.onSave(Task(description: _description));
+                  widget.onSave(Task(
+                    id: widget.task?.id ?? '',
+                    description: _description,
+                    isCompleted: widget.task?.isCompleted ?? false,
+                  ));
                   Navigator.pop(context);
                 }
               },

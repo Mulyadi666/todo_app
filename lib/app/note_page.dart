@@ -176,8 +176,8 @@ class _NotePageState extends State<NotePage> {
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.grey[800]
-                    : Colors.blue[100],
-                borderRadius: BorderRadius.circular(8.0),
+                    : const Color.fromARGB(255, 255, 233, 254),
+                borderRadius: BorderRadius.circular(20),
               ),
               constraints: BoxConstraints(
                 minWidth: 100,

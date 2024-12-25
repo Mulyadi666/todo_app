@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../widgets/task_form.dart';
 import '../models/task.dart';
 
@@ -13,6 +14,44 @@ class EditTask extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit Tugas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Hapus Tugas'),
+                  content: const Text(
+                      'Apakah Anda yakin ingin menghapus tugas ini?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Batal'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Hapus'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                try {
+                  var taskDoc = FirebaseFirestore.instance
+                      .collection('tasks')
+                      .doc(task.id);
+                  await taskDoc.delete();
+                  Navigator.pop(context); // Kembali ke halaman sebelumnya
+                  print('Tugas berhasil dihapus');
+                } catch (e) {
+                  print('Gagal menghapus tugas: $e');
+                }
+              }
+            },
+          ),
+        ],
       ),
       body: TaskForm(
         onSave: (updatedTask) {

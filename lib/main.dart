@@ -15,6 +15,7 @@ class TodoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Aplikasi Todo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -105,16 +106,30 @@ class _TodoAppStateState extends State<TodoAppState> {
   }
 
   void editNote(int index, Note note) async {
-    if (index < 0 || index >= notes.length) return; // Periksa indeks yang valid
+    if (index < 0 || index >= notes.length) {
+      print('Indeks tidak valid: $index');
+      return;
+    }
+
     var noteDoc =
         FirebaseFirestore.instance.collection('notes').doc(notes[index].id);
-    await noteDoc.update({
-      'title': note.title,
-      'content': note.content,
-    });
-    setState(() {
-      notes[index] = note;
-    });
+
+    try {
+      await noteDoc.update({
+        'title': note.title,
+        'content': note.content,
+      });
+      setState(() {
+        notes[index] = Note(
+          id: notes[index].id, // Pastikan ID tetap sama
+          title: note.title,
+          content: note.content,
+        );
+      });
+      print('Catatan berhasil diperbarui: ${note.title}');
+    } catch (e) {
+      print('Error updating note: $e');
+    }
   }
 
   void toggleDarkMode() {

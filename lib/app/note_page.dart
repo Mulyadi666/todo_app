@@ -9,8 +9,11 @@ class NotePage extends StatefulWidget {
   final Function(Note) addNote;
   final Function(int, Note) editNote;
 
-  NotePage(
-      {required this.notes, required this.addNote, required this.editNote});
+  NotePage({
+    required this.notes,
+    required this.addNote,
+    required this.editNote,
+  });
 
   @override
   _NotePageState createState() => _NotePageState();
@@ -23,6 +26,15 @@ class _NotePageState extends State<NotePage> {
     setState(() {
       isGridView = !isGridView;
     });
+  }
+
+  Future<void> _deleteNote(String noteId) async {
+    try {
+      await FirebaseFirestore.instance.collection('notes').doc(noteId).delete();
+      print('Catatan berhasil dihapus');
+    } catch (e) {
+      print('Gagal menghapus catatan: $e');
+    }
   }
 
   @override
@@ -73,20 +85,44 @@ class _NotePageState extends State<NotePage> {
     return ListView.builder(
       itemCount: notes.length,
       itemBuilder: (context, index) {
-        return ListTile(
-          title: Text(notes[index].title),
-          subtitle: Text(notes[index].content),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditNote(
-                  note: notes[index],
-                  onSave: (note) => widget.editNote(index, note),
-                ),
+        return GestureDetector(
+          onLongPress: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Hapus Catatan'),
+                content: Text('Apakah Anda yakin ingin menghapus catatan ini?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text('Batal'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text('Hapus'),
+                  ),
+                ],
               ),
             );
+            if (confirm == true) {
+              await _deleteNote(notes[index].id);
+            }
           },
+          child: ListTile(
+            title: Text(notes[index].title),
+            subtitle: Text(notes[index].content),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditNote(
+                    note: notes[index],
+                    onSave: (note) => widget.editNote(index, note),
+                  ),
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -111,6 +147,29 @@ class _NotePageState extends State<NotePage> {
                   ),
                 ),
               );
+            },
+            onLongPress: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: Text('Hapus Catatan'),
+                  content:
+                      Text('Apakah Anda yakin ingin menghapus catatan ini?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: Text('Batal'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: Text('Hapus'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await _deleteNote(note.id);
+              }
             },
             child: Container(
               padding: EdgeInsets.all(16.0),

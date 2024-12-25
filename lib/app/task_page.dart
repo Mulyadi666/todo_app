@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/task.dart';
 import '../widgets/task_form.dart';
 import 'edit_task.dart';
-import '../models/task.dart';
 
 class TaskPage extends StatefulWidget {
   final List<Task> tasks;
   final Function(Task) addTask;
   final Function(int, Task) editTask;
-  final Function(String) toggleTaskCompletion; // Tipe String untuk ID
-  final Function(String) deleteTask; // Menggunakan ID tugas
+  final Function(String)
+      toggleTaskCompletion; // Fungsi untuk toggle status tugas
+  final Function(String)
+      deleteTask; // Fungsi untuk menghapus tugas berdasarkan ID
+
   TaskPage({
     required this.tasks,
     required this.addTask,
     required this.editTask,
     required this.toggleTaskCompletion,
-    required this.deleteTask, // Menggunakan ID untuk delete
+    required this.deleteTask,
   });
 
   @override
@@ -23,8 +26,6 @@ class TaskPage extends StatefulWidget {
 }
 
 class _TaskPageState extends State<TaskPage> {
-  List<Task> selectedTasks = []; // Menyimpan task yang dipilih untuk dihapus
-
   void _showAddTaskDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -34,7 +35,7 @@ class _TaskPageState extends State<TaskPage> {
           content: TaskForm(
             onSave: (task) {
               widget.addTask(task);
-              Navigator.pop(context); // Menutup dialog setelah menambah task
+              Navigator.pop(context); // Menutup dialog setelah menambah tugas
             },
           ),
         );
@@ -42,14 +43,13 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  void _toggleSelection(int index) {
-    setState(() {
-      if (selectedTasks.contains(widget.tasks[index])) {
-        selectedTasks.remove(widget.tasks[index]);
-      } else {
-        selectedTasks.add(widget.tasks[index]);
-      }
-    });
+  Future<void> _deleteTask(String taskId) async {
+    try {
+      await FirebaseFirestore.instance.collection('tasks').doc(taskId).delete();
+      print('Tugas berhasil dihapus');
+    } catch (e) {
+      print('Gagal menghapus tugas: $e');
+    }
   }
 
   @override
@@ -57,22 +57,6 @@ class _TaskPageState extends State<TaskPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Tugas'),
-        actions: [
-          if (selectedTasks.isNotEmpty)
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () {
-                // Menghapus task yang dipilih berdasarkan ID
-                selectedTasks.forEach((task) {
-                  widget.deleteTask(task.id);
-                  // Menghapus berdasarkan ID
-                });
-                setState(() {
-                  selectedTasks.clear(); // Clear the selection after delete
-                });
-              },
-            ),
-        ],
       ),
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection('tasks').snapshots(),
@@ -97,8 +81,28 @@ class _TaskPageState extends State<TaskPage> {
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               return GestureDetector(
-                onLongPress: () {
-                  _toggleSelection(index); // Tahan untuk memilih
+                onLongPress: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text('Hapus Tugas'),
+                      content:
+                          Text('Apakah Anda yakin ingin menghapus tugas ini?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text('Hapus'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await _deleteTask(tasks[index].id);
+                  }
                 },
                 child: Container(
                   margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
@@ -110,9 +114,7 @@ class _TaskPageState extends State<TaskPage> {
                     leading: Checkbox(
                       value: tasks[index].isCompleted,
                       onChanged: (bool? value) {
-                        // Toggle task completion status by task ID
-                        widget.toggleTaskCompletion(
-                            tasks[index].id); // Menggunakan ID
+                        widget.toggleTaskCompletion(tasks[index].id);
                       },
                     ),
                     title: Text(

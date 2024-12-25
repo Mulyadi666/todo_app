@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/note.dart';
 
 class FirebaseService {
   final CollectionReference tasks =
       FirebaseFirestore.instance.collection('tasks');
+  final CollectionReference notes =
+      FirebaseFirestore.instance.collection('notes');
 
   // Create
   Future<void> createTask(
@@ -50,6 +53,25 @@ class FirebaseService {
       await tasks.doc(id).delete();
     } catch (e) {
       print('Error deleting task: $e');
+    }
+  }
+
+  Future<void> deleteNote(String id) async {
+    try {
+      await notes.doc(id).delete();
+    } catch (e) {
+      print('Error deleting note: $e');
+    }
+  }
+
+  Future<void> updateNoteToFirebase(Note note) async {
+    try {
+      await FirebaseFirestore.instance.collection('notes').doc(note.id).update({
+        'title': note.title,
+        'content': note.content,
+      });
+    } catch (e) {
+      print('Error updating note: $e');
     }
   }
 }

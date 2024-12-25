@@ -5,7 +5,7 @@ class NoteForm extends StatefulWidget {
   final Function(Note) onSave;
   final Note? note;
 
-  NoteForm({required this.onSave, this.note});
+  const NoteForm({required this.onSave, this.note, Key? key}) : super(key: key);
 
   @override
   _NoteFormState createState() => _NoteFormState();
@@ -44,35 +44,30 @@ class _NoteFormState extends State<NoteForm> {
             TextFormField(
               controller: _titleController,
               decoration: InputDecoration(labelText: 'Judul Catatan'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Judul tidak boleh kosong';
-                }
-                return null;
-              },
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Judul tidak boleh kosong'
+                  : null,
             ),
             TextFormField(
               controller: _contentController,
               decoration: InputDecoration(labelText: 'Isi Catatan'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Isi tidak boleh kosong';
-                }
-                return null;
-              },
+              validator: (value) => value == null || value.isEmpty
+                  ? 'Isi tidak boleh kosong'
+                  : null,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
                   widget.onSave(Note(
-                    id: widget.note?.id ?? '',
+                    id: widget.note?.id ??
+                        '', // ID tetap kosong untuk catatan baru
                     title: _titleController.text,
                     content: _contentController.text,
                   ));
                 }
               },
-              child: Text('Simpan Catatan'),
+              child: const Text('Simpan Catatan'),
             ),
           ],
         ),

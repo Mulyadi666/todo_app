@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app/app/login.dart';
 import '../app/task_page.dart';
 import '../app/note_page.dart';
 import '../models/task.dart';
@@ -61,11 +62,33 @@ class _NavBarState extends State<NavBar> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // title: Text('Aplikasi Todo'),
         actions: [
           IconButton(
             icon: Icon(widget.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
             onPressed: widget.toggleDarkMode as VoidCallback,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(
+                right: 16.0), // Menambahkan padding 16 piksel di kanan
+            child: TextButton(
+              onPressed: () {
+                // Navigasi ke halaman Login ketika tombol ditekan
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => LoginPage()), // Pindah ke LoginPage
+                );
+              },
+              child: Text(
+                'Login',
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white // Jika dark mode, tombol warna putih
+                      : Colors.black, // Jika light mode, tombol warna hitam
+                  fontSize: 16.0,
+                ),
+              ),
+            ),
           ),
         ],
       ),

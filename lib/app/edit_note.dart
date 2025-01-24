@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../widgets/note_form.dart';
 import '../models/note.dart';
+import 'package:share_plus/share_plus.dart';
 
 class EditNote extends StatelessWidget {
   final Note note;
@@ -16,6 +17,13 @@ class EditNote extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Edit Catatan'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () {
+              // Share the note title and content
+              Share.share('${note.title}\n\n${note.content}');
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () async {

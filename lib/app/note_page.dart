@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_note.dart';
 import 'edit_note.dart';
 import '../models/note.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
+import 'package:share_plus/share_plus.dart';
 
 class NotePage extends StatefulWidget {
   final List<Note> notes;
@@ -37,6 +39,17 @@ class _NotePageState extends State<NotePage> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    // Simulasi proses refresh
+    await Future.delayed(Duration(seconds: 1));
+    setState(() {});
+  }
+
+  void shareNote(String title, String content) {
+    final textToShare = "Catatan Saya:\n\n$title\n\n$content";
+    Share.share(textToShare);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,21 +62,25 @@ class _NotePageState extends State<NotePage> {
           ),
         ],
       ),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance.collection('notes').snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-          var notes = snapshot.data!.docs.map((doc) {
-            return Note(
-              id: doc.id,
-              title: doc['title'],
-              content: doc['content'],
-            );
-          }).toList();
-          return isGridView ? buildGridView(notes) : buildListView(notes);
-        },
+      body: LiquidPullToRefresh(
+        onRefresh: _handleRefresh,
+        showChildOpacityTransition: false,
+        child: StreamBuilder(
+          stream: FirebaseFirestore.instance.collection('notes').snapshots(),
+          builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (!snapshot.hasData) {
+              return Center(child: CircularProgressIndicator());
+            }
+            var notes = snapshot.data!.docs.map((doc) {
+              return Note(
+                id: doc.id,
+                title: doc['title'],
+                content: doc['content'],
+              );
+            }).toList();
+            return isGridView ? buildGridView(notes) : buildListView(notes);
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
